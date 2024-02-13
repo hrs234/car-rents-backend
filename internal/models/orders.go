@@ -3,8 +3,8 @@ package models
 import "time"
 
 type OrdersItem struct {
-	Id              string     `json:"id"`
-	CarId           string     `json:"car_id"`
+	Id              int        `json:"id"`
+	CarId           int        `json:"car_id"`
 	OrderDate       *time.Time `json:"order_date"`
 	PickupDate      *time.Time `json:"pickup_date"`
 	DropoffDate     *time.Time `json:"dropoff_date"`
@@ -19,9 +19,11 @@ type OrdersResponseList struct {
 	Order   string        `json:"order"`
 	OrderBy string        `json:"order_by"`
 	Items   []*OrdersItem `json:"items"`
+	Message string        `json:"message"`
 }
 
 type OrdersRequestCreate struct {
+	Id              string     `json:"id"`
 	CarId           string     `json:"car_id"`
 	OrderDate       *time.Time `json:"order_date"`
 	PickupDate      *time.Time `json:"pickup_date"`
@@ -41,7 +43,7 @@ type OrdersRequestUpdate struct {
 }
 
 type OrdersRequestDelete struct {
-	Id string `json:"id"`
+	Id int `json:"id"`
 }
 
 type OrdersResponseGet struct {

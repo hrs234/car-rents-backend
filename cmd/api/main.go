@@ -1,7 +1,7 @@
 package main
 
 import (
-	server "api/internal"
+	server "api/internal/src"
 	"fmt"
 )
 

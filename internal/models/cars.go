@@ -1,7 +1,7 @@
 package models
 
 type CarsItem struct {
-	Id        string  `json:"id"`
+	Id        int     `json:"id"`
 	CarName   string  `json:"car_name"`
 	DayRate   float64 `json:"day_rate"`
 	MonthRate float64 `json:"month_rate"`
@@ -15,6 +15,7 @@ type CarsResponseList struct {
 	Order   string      `json:"order"`
 	OrderBy string      `json:"order_by"`
 	Items   []*CarsItem `json:"items"`
+	Message string      `json:"message"`
 }
 
 type CarsRequestCreate struct {
@@ -33,7 +34,7 @@ type CarsRequestUpdate struct {
 }
 
 type CarsRequestDelete struct {
-	Id string `json:"id"`
+	Id int `json:"id"`
 }
 
 type CarsResponseGet struct {

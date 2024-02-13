@@ -11,6 +11,6 @@ type RequestListsGeneral struct {
 }
 
 type ResponseGeneral struct {
-	Id      string `json:"id"`
+	Id      int    `json:"id"`
 	Message string `json:"message"`
 }

@@ -20,7 +20,7 @@ func RunMigrate(user, pass, host, port, database string) error {
 	}
 
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, pass, host, port, database)
-	configPath := "file://" + filepath.Join(getwd, "..", "..", "migrations")
+	configPath := "file://" + filepath.Join(getwd, "migrations")
 
 	m, err := migrate.New(
 		configPath,
