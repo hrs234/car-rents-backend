@@ -15,8 +15,8 @@ run:
 	@go run cmd/api/main.go
 
 # Create DB container
-docker-run:
-	@if docker compose up 2>/dev/null; then \
+docker-run: docker-down
+	@if docker compose up -d 2>/dev/null; then \
 		: ; \
 	else \
 		echo "Falling back to Docker Compose V1"; \

@@ -1,9 +1,9 @@
 CREATE TABLE cars (
     car_id SERIAL PRIMARY KEY NOT NULL,
-    car_name int NOT NULL,
+    car_name CHAR(50) NOT NULL,
     day_rate decimal NOT NULL,
     month_rate decimal NOT NULL,
-    created_by CHAR(256) NOT NULL,
+    image CHAR(256) NOT NULL
 );
 
 CREATE TABLE orders (

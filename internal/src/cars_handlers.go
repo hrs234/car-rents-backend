@@ -120,6 +120,7 @@ func (s *Server) CarsDeleteHandler(c *gin.Context) {
 
 func (s *Server) CarsGetByIdHandler(c *gin.Context) {
 	carId := c.Param("id")
+	log.Println(carId)
 
 	resp, err := s.getCarsByIdController(c, carId)
 	if err != nil {
