@@ -3,11 +3,13 @@ package src
 import (
 	"api/internal/models"
 	"api/internal/utils"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,20 +33,23 @@ func (s *Server) listOrdersController(c *gin.Context, req *models.RequestListsGe
 
 	query := `
 		SELECT
-			order_id
-			car_id,
+			order_id,
+			orders.car_id,
+			cars.car_name,
 			order_date,
 			pickup_date,
 			dropoff_date,
 			pickup_location,
 			dropoff_location
-		FROM orders
+		FROM orders JOIN cars ON orders.car_id=cars.car_id
 	`
 	var params []interface{}
 
 	cmdQuery := ""
+	count := 0
 	if len(req.Search) > 0 {
-		cmdQuery = fmt.Sprintf("%s WHERE LOWER(order_date) LIKE LOWER(?)", cmdQuery)
+		count++
+		cmdQuery = fmt.Sprintf("%s WHERE LOWER(pickup_location) LIKE LOWER($%d)", cmdQuery, count)
 		params = append(params, "%"+utils.Sanitize(req.Search)+"%")
 	}
 
@@ -60,7 +65,13 @@ func (s *Server) listOrdersController(c *gin.Context, req *models.RequestListsGe
 		cmdQuery = fmt.Sprintf("%s ORDER BY %s %s", cmdQuery, utils.Sanitize(req.OrderBy), req.Order)
 	}
 
-	cmdQuery = fmt.Sprintf("%s LIMIT ? OFFSET ?", cmdQuery)
+	count++
+	cmdQuery = fmt.Sprintf("%s LIMIT $%d ", cmdQuery, count)
+	params = append(params, req.Limit)
+
+	count++
+	cmdQuery = fmt.Sprintf("%s OFFSET $%d ", cmdQuery, count)
+	params = append(params, (req.Page-1)*req.Limit)
 
 	rows, err := s.db.Query(c, fmt.Sprintf("%s %s", query, cmdQuery), params...)
 	if err != nil {
@@ -69,19 +80,32 @@ func (s *Server) listOrdersController(c *gin.Context, req *models.RequestListsGe
 	}
 	defer rows.Close()
 
+	var id, carId sql.NullInt64
+	var orderDate, pickupDate, dropoffDate sql.NullTime
+	var pickupLocation, dropoffLocation, carName sql.NullString
 	ordersData := []*models.OrdersItem{}
 	for rows.Next() {
 		item := models.OrdersItem{}
 
 		err = rows.Scan(
-			&item.Id,
-			&item.CarId,
-			&item.OrderDate,
-			&item.PickupDate,
-			&item.DropoffDate,
-			&item.PickupLocation,
-			&item.DropoffLocation,
+			&id,
+			&carId,
+			&carName,
+			&orderDate,
+			&pickupDate,
+			&dropoffDate,
+			&pickupLocation,
+			&dropoffLocation,
 		)
+
+		item.Id = int(id.Int64)
+		item.CarId = int(carId.Int64)
+		item.CarName = strings.TrimSpace(carName.String)
+		item.OrderDate = orderDate.Time.Format("2006-01-02")
+		item.PickupDate = pickupDate.Time.Format("2006-01-02")
+		item.DropoffDate = dropoffDate.Time.Format("2006-01-02")
+		item.PickupLocation = strings.TrimSpace(pickupLocation.String)
+		item.DropoffLocation = strings.TrimSpace(dropoffLocation.String)
 
 		if err != nil {
 			log.Println(err)
@@ -98,6 +122,7 @@ func (s *Server) listOrdersController(c *gin.Context, req *models.RequestListsGe
 		Page:    req.Page,
 		Limit:   req.Limit,
 		Items:   ordersData,
+		Message: "success",
 	}, nil
 }
 
@@ -109,21 +134,49 @@ func (s *Server) createOrdersController(c *gin.Context, req *models.OrdersReques
 		return nil, errors.New(errMsg)
 	}
 
-	if req.OrderDate == nil {
+	carIdNum, err := strconv.Atoi(req.CarId)
+	if err != nil {
+		errMsg = "wrong-cars-id-type"
+		log.Println(errMsg)
+		return nil, errors.New(errMsg)
+	}
+
+	if req.OrderDate == "" {
 		errMsg = "missing-order-date"
 		log.Println(errMsg)
 		return nil, errors.New(errMsg)
 	}
 
-	if req.PickupDate == nil {
+	_, err = time.Parse("2006-01-02", req.OrderDate)
+	if err != nil {
+		errMsg = "failed-parsing-order-date"
+		log.Println(err)
+		return nil, errors.New(errMsg)
+	}
+
+	if req.PickupDate == "" {
 		errMsg = "missing-pickup-date"
 		log.Println(errMsg)
 		return nil, errors.New(errMsg)
 	}
 
-	if req.DropoffDate == nil {
+	_, err = time.Parse("2006-01-02", req.PickupDate)
+	if err != nil {
+		errMsg = "failed-parsing-pickup-date"
+		log.Println(err)
+		return nil, errors.New(errMsg)
+	}
+
+	if req.DropoffDate == "" {
 		errMsg = "missing-dropoff-date"
 		log.Println(errMsg)
+		return nil, errors.New(errMsg)
+	}
+
+	_, err = time.Parse("2006-01-02", req.DropoffDate)
+	if err != nil {
+		errMsg = "failed-parsing-dropoff-date"
+		log.Println(err)
 		return nil, errors.New(errMsg)
 	}
 
@@ -133,21 +186,22 @@ func (s *Server) createOrdersController(c *gin.Context, req *models.OrdersReques
 		return nil, errors.New(errMsg)
 	}
 
-	if req.DropoffDate == nil {
+	if req.DropoffLocation == "" {
 		errMsg = "missing-dropoff-location"
 		log.Println(errMsg)
 		return nil, errors.New(errMsg)
 	}
 
-	var carsId int
-	err := s.db.QueryRow(c, "INSERT INTO orders (car_id, order_date, pickup_date, dropoff_date, pickup_location, dropoff_location) VALUES (?, ?, ?, ?, ?, ?) RETURNING car_id", req.CarId, req.OrderDate, req.PickupDate, req.DropoffDate, req.PickupLocation, req.DropoffLocation).Scan(&carsId)
+	var orderId int
+	err = s.db.QueryRow(c, "INSERT INTO orders (car_id, order_date, pickup_date, dropoff_date, pickup_location, dropoff_location) VALUES ($1, $2, $3, $4, $5, $6) RETURNING order_id", carIdNum, req.OrderDate, req.PickupDate, req.DropoffDate, req.PickupLocation, req.DropoffLocation).Scan(&orderId)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
 	return &models.ResponseGeneral{
-		Id: carsId,
+		Id:      orderId,
+		Message: "success",
 	}, nil
 }
 
@@ -169,33 +223,74 @@ func (s *Server) updateOrdersController(c *gin.Context, req *models.OrdersReques
 	query := "UPDATE orders SET"
 	var params []interface{}
 	var set []string
+	count := 0
 
-	if req.OrderDate != nil {
-		set = append(set, "order_date=?")
+	if req.CarId != "" {
+		carIdNum, err := strconv.Atoi(req.CarId)
+		if err != nil {
+			errorMsg = "wrong-car-id-type"
+			log.Println(errorMsg)
+			return nil, errors.New(errorMsg)
+		}
+
+		count++
+		set = append(set, fmt.Sprintf("car_id=$%d", count))
+		params = append(params, carIdNum)
+	}
+
+	if req.OrderDate != "" {
+		_, err = time.Parse("2006-01-02", req.OrderDate)
+		if err != nil {
+			errorMsg = "failed-parsing-order-date"
+			log.Println(err)
+			return nil, errors.New(errorMsg)
+		}
+
+		count++
+		set = append(set, fmt.Sprintf("order_date=$%d", count))
 		params = append(params, req.OrderDate)
 	}
 
-	if req.PickupDate != nil {
-		set = append(set, "pickup_date=?")
+	if req.PickupDate != "" {
+		_, err = time.Parse("2006-01-02", req.PickupDate)
+		if err != nil {
+			errorMsg = "failed-parsing-pickup-date"
+			log.Println(err)
+			return nil, errors.New(errorMsg)
+		}
+
+		count++
+		set = append(set, fmt.Sprintf("pickup_date=$%d", count))
 		params = append(params, req.PickupDate)
 	}
 
-	if req.DropoffDate != nil {
-		set = append(set, "dropoff_date=?")
+	if req.DropoffDate != "" {
+		_, err = time.Parse("2006-01-02", req.DropoffDate)
+		if err != nil {
+			errorMsg = "failed-parsing-dropoff-date"
+			log.Println(err)
+			return nil, errors.New(errorMsg)
+		}
+
+		count++
+		set = append(set, fmt.Sprintf("dropoff_date=$%d", count))
 		params = append(params, req.DropoffDate)
 	}
 
 	if req.PickupLocation != "" {
-		set = append(set, "pickup_location=?")
+		count++
+		set = append(set, fmt.Sprintf("pickup_location=$%d", count))
 		params = append(params, req.PickupLocation)
 	}
 
 	if req.DropoffLocation != "" {
-		set = append(set, "dropoff_location=?")
+		count++
+		set = append(set, fmt.Sprintf("dropoff_location=$%d", count))
 		params = append(params, req.DropoffLocation)
 	}
 
-	query = fmt.Sprintf("%s %s WHERE order_id=?", query, strings.Join(set, ","))
+	count++
+	query = fmt.Sprintf("%s %s WHERE order_id=$%d", query, strings.Join(set, ","), count)
 	params = append(params, orderId)
 
 	_, err = s.db.Exec(c, query, params...)
@@ -225,7 +320,7 @@ func (s *Server) deleteOrderController(c *gin.Context, id string) (*models.Respo
 		return nil, errors.New(errorMsg)
 	}
 
-	_, err = s.db.Exec(c, "DELETE FROM orders WHERE order_id=?", orderId)
+	_, err = s.db.Exec(c, "DELETE FROM orders WHERE order_id=$1", orderId)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -252,32 +347,49 @@ func (s *Server) getOrderByIdController(c *gin.Context, id string) (*models.Orde
 		return nil, errors.New(errorMsg)
 	}
 
-	var item models.OrdersResponseGet
+	var resp models.OrdersResponseGet
+	var resId, resCarId sql.NullInt64
+	var orderDate, pickupDate, dropoffDate sql.NullTime
+	var pickupLocation, dropoffLocation, carName sql.NullString
 	err = s.db.QueryRow(c, `
 		SELECT 
 			order_id,
-			car_id, 
+			orders.car_id,
+			cars.car_name,
 			order_date, 
 			pickup_date, 
 			dropoff_date,
 			pickup_location,
 			dropoff_location
-		FROM orders WHERE car_id = ?
+		FROM orders JOIN cars ON orders.car_id=cars.car_id WHERE orders.car_id = $1
 		`, carId).Scan(
-		&item.Item.Id,
-		&item.Item.CarId,
-		&item.Item.OrderDate,
-		&item.Item.PickupDate,
-		&item.Item.DropoffDate,
-		&item.Item.PickupLocation,
-		&item.Item.DropoffLocation,
+		&resId,
+		&resCarId,
+		&carName,
+		&orderDate,
+		&pickupDate,
+		&dropoffDate,
+		&pickupLocation,
+		&dropoffLocation,
 	)
+
+	resp.Item = &models.OrdersItem{
+		Id:              int(resId.Int64),
+		CarId:           int(resCarId.Int64),
+		CarName:         strings.TrimSpace(carName.String),
+		OrderDate:       orderDate.Time.Format("2006-01-02"),
+		PickupDate:      pickupDate.Time.Format("2006-01-02"),
+		DropoffDate:     dropoffDate.Time.Format("2006-01-02"),
+		PickupLocation:  strings.TrimSpace(pickupLocation.String),
+		DropoffLocation: strings.TrimSpace(dropoffLocation.String),
+	}
+
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	item.Message = "success"
+	resp.Message = "success"
 
-	return &item, nil
+	return &resp, nil
 }

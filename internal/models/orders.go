@@ -1,15 +1,14 @@
 package models
 
-import "time"
-
 type OrdersItem struct {
-	Id              int        `json:"id"`
-	CarId           int        `json:"car_id"`
-	OrderDate       *time.Time `json:"order_date"`
-	PickupDate      *time.Time `json:"pickup_date"`
-	DropoffDate     *time.Time `json:"dropoff_date"`
-	PickupLocation  string     `json:"pickup_location"`
-	DropoffLocation string     `json:"dropoff_location"`
+	Id              int    `json:"id"`
+	CarId           int    `json:"car_id"`
+	CarName         string `json:"car_name"`
+	OrderDate       string `json:"order_date"`
+	PickupDate      string `json:"pickup_date"`
+	DropoffDate     string `json:"dropoff_date"`
+	PickupLocation  string `json:"pickup_location"`
+	DropoffLocation string `json:"dropoff_location"`
 }
 
 type OrdersResponseList struct {
@@ -23,23 +22,23 @@ type OrdersResponseList struct {
 }
 
 type OrdersRequestCreate struct {
-	Id              string     `json:"id"`
-	CarId           string     `json:"car_id"`
-	OrderDate       *time.Time `json:"order_date"`
-	PickupDate      *time.Time `json:"pickup_date"`
-	DropoffDate     *time.Time `json:"dropoff_date"`
-	PickupLocation  string     `json:"pickup_location"`
-	DropoffLocation string     `json:"dropoff_location"`
+	Id              string `json:"id"`
+	CarId           string `json:"car_id"`
+	OrderDate       string `json:"order_date"`
+	PickupDate      string `json:"pickup_date"`
+	DropoffDate     string `json:"dropoff_date"`
+	PickupLocation  string `json:"pickup_location"`
+	DropoffLocation string `json:"dropoff_location"`
 }
 
 type OrdersRequestUpdate struct {
-	Id              string     `json:"id"`
-	CarId           string     `json:"car_id"`
-	OrderDate       *time.Time `json:"order_date"`
-	PickupDate      *time.Time `json:"pickup_date"`
-	DropoffDate     *time.Time `json:"dropoff_date"`
-	PickupLocation  string     `json:"pickup_location"`
-	DropoffLocation string     `json:"dropoff_location"`
+	Id              string `json:"id"`
+	CarId           string `json:"car_id"`
+	OrderDate       string `json:"order_date"`
+	PickupDate      string `json:"pickup_date"`
+	DropoffDate     string `json:"dropoff_date"`
+	PickupLocation  string `json:"pickup_location"`
+	DropoffLocation string `json:"dropoff_location"`
 }
 
 type OrdersRequestDelete struct {
