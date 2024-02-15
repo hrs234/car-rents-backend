@@ -121,9 +121,6 @@ func (s *Server) CarsDeleteHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Headers", "true")
-	c.Header("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, OPTIONS")
 	c.JSON(http.StatusOK, resp)
 }
 
