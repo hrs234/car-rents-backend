@@ -2,7 +2,6 @@ package src
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -11,18 +10,9 @@ import (
 func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.Default()
 
-	config := cors.Config{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"PUT", "POST", "GET", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}
-
+	r.Use(cors.Default())
 	r.GET("/health", s.healthHandler)
 	v1 := r.Group("/api/v1/")
-	v1.Use(cors.New(config))
 	{
 		v1.GET("/cars", s.CarsListHandler)
 		v1.GET("/cars/:id", s.CarsGetByIdHandler)
