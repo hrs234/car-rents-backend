@@ -126,15 +126,29 @@ func (s *Server) createCarsController(c *gin.Context, req *models.CarsRequestCre
 		return nil, errors.New(errMsg)
 	}
 
-	if req.DayRate == 0 {
+	if req.DayRate == "" {
 		errMsg = "missing-day-rate"
 		log.Println(errMsg)
 		return nil, errors.New(errMsg)
 	}
 
-	if req.MonthRate == 0 {
+	dayRateVal, err := strconv.ParseFloat(strings.TrimSpace(req.DayRate), 64)
+	if err != nil {
+		errMsg = "failed-parsing-month-rate"
+		log.Println(err)
+		return nil, errors.New(errMsg)
+	}
+
+	if req.MonthRate == "" {
 		errMsg = "missing-month-rate"
 		log.Println(errMsg)
+		return nil, errors.New(errMsg)
+	}
+
+	monthRateVal, err := strconv.ParseFloat(strings.TrimSpace(req.MonthRate), 64)
+	if err != nil {
+		errMsg = "failed-parsing-month-rate"
+		log.Println(err)
 		return nil, errors.New(errMsg)
 	}
 
@@ -146,7 +160,7 @@ func (s *Server) createCarsController(c *gin.Context, req *models.CarsRequestCre
 
 	// TODO: need image save provider
 	var carsId int
-	err := s.db.QueryRow(c, "INSERT INTO cars (car_name, day_rate, month_rate, image) VALUES ($1, $2, $3, $4) RETURNING car_id", req.CarName, req.DayRate, req.MonthRate, req.Image).Scan(&carsId)
+	err = s.db.QueryRow(c, "INSERT INTO cars (car_name, day_rate, month_rate, image) VALUES ($1, $2, $3, $4) RETURNING car_id", req.CarName, dayRateVal, monthRateVal, req.Image).Scan(&carsId)
 	if err != nil {
 		log.Println(err)
 		return nil, err
