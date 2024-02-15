@@ -361,7 +361,7 @@ func (s *Server) getOrderByIdController(c *gin.Context, id string) (*models.Orde
 			dropoff_date,
 			pickup_location,
 			dropoff_location
-		FROM orders JOIN cars ON orders.car_id=cars.car_id WHERE orders.car_id = $1
+		FROM orders JOIN cars ON orders.car_id=cars.car_id WHERE orders.order_id = $1
 		`, carId).Scan(
 		&resId,
 		&resCarId,
