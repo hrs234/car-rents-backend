@@ -35,8 +35,6 @@ func (s *Server) CarsListHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, OPTIONS")
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -66,8 +64,6 @@ func (s *Server) CarsCreateHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, OPTIONS")
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -98,8 +94,6 @@ func (s *Server) CarsUpdateHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, OPTIONS")
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -143,7 +137,5 @@ func (s *Server) CarsGetByIdHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, OPTIONS")
 	c.JSON(http.StatusOK, resp)
 }
