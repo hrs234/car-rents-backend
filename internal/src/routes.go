@@ -25,6 +25,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 		v1.POST("/orders", s.OrdersCreateHandler)
 		v1.PUT("/orders/:id", s.OrdersUpdateHandler)
 		v1.DELETE("/orders/:id", s.OrdersDeleteHandler)
+
+		v1.GET("/check-occupied-cars/:car_id/:pickup_date", s.OrdersCheckCarsHandler)
 	}
 	return r
 }

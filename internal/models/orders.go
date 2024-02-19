@@ -49,3 +49,8 @@ type OrdersResponseGet struct {
 	Message string      `json:"message"`
 	Item    *OrdersItem `json:"item"`
 }
+
+type RequestOrdersCheckOcupiedCars struct {
+	CarId      string `json:"car_id"`
+	PickupDate string `json:"pickup_date"`
+}

@@ -35,8 +35,6 @@ func (s *Server) OrdersListHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, OPTIONS")
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -66,8 +64,6 @@ func (s *Server) OrdersCreateHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, OPTIONS")
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -98,8 +94,6 @@ func (s *Server) OrdersUpdateHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, OPTIONS")
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -121,8 +115,6 @@ func (s *Server) OrdersDeleteHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, OPTIONS")
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -144,7 +136,30 @@ func (s *Server) OrdersGetByIdHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, OPTIONS")
+	c.JSON(http.StatusOK, resp)
+}
+
+func (s *Server) OrdersCheckCarsHandler(c *gin.Context) {
+	carId := c.Param("car_id")
+	pickupDate := c.Param("pickup_date")
+
+	resp, err := s.checkCarsIsAlreadyOccupied(c, &models.RequestOrdersCheckOcupiedCars{
+		CarId:      carId,
+		PickupDate: pickupDate,
+	})
+	if err != nil {
+		if strings.Contains(err.Error(), "missing") {
+			c.JSON(http.StatusBadRequest, &models.ResponseGeneral{
+				Message: err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, &models.ResponseGeneral{
+			Message: err.Error(),
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, resp)
 }

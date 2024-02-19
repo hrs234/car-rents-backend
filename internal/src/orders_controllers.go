@@ -192,6 +192,19 @@ func (s *Server) createOrdersController(c *gin.Context, req *models.OrdersReques
 		return nil, errors.New(errMsg)
 	}
 
+	resCheckCars, err := s.checkCarsIsAlreadyOccupied(c, &models.RequestOrdersCheckOcupiedCars{
+		CarId:      req.CarId,
+		PickupDate: req.PickupDate,
+	})
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	if resCheckCars.Message == "car-already-occupied" {
+		return nil, errors.New(resCheckCars.Message)
+	}
+
 	var orderId int
 	err = s.db.QueryRow(c, "INSERT INTO orders (car_id, order_date, pickup_date, dropoff_date, pickup_location, dropoff_location) VALUES ($1, $2, $3, $4, $5, $6) RETURNING order_id", carIdNum, req.OrderDate, req.PickupDate, req.DropoffDate, req.PickupLocation, req.DropoffLocation).Scan(&orderId)
 	if err != nil {
@@ -329,6 +342,47 @@ func (s *Server) deleteOrderController(c *gin.Context, id string) (*models.Respo
 	return &models.ResponseGeneral{
 		Id:      orderId,
 		Message: "success",
+	}, nil
+}
+
+func (s *Server) checkCarsIsAlreadyOccupied(c *gin.Context, req *models.RequestOrdersCheckOcupiedCars) (*models.ResponseGeneral, error) {
+	errorMsg := ""
+
+	if req.CarId == "" {
+		errorMsg = "missing-car-id"
+		log.Println(errorMsg)
+		return nil, errors.New(errorMsg)
+	}
+
+	if req.PickupDate == "" {
+		errorMsg = "missing-pickup-date"
+		log.Println(errorMsg)
+		return nil, errors.New(errorMsg)
+	}
+
+	_, err := time.Parse("2006-01-02", req.PickupDate)
+	if err != nil {
+		errorMsg = "failed-parsing-pickup-date"
+		log.Println(err)
+		return nil, errors.New(errorMsg)
+	}
+
+	// check the is the cars is ordered in order_date ?
+	var usedCars int
+	err = s.db.QueryRow(c, "SELECT COUNT(*) FROM orders WHERE dropoff_date >= $1 AND car_id=$2", req.PickupDate, req.CarId).Scan(&usedCars)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	if usedCars > 0 {
+		return &models.ResponseGeneral{
+			Message: "car-already-occupied",
+		}, nil
+	}
+
+	return &models.ResponseGeneral{
+		Message: "car-available",
 	}, nil
 }
 
