@@ -306,6 +306,20 @@ func (s *Server) updateOrdersController(c *gin.Context, req *models.OrdersReques
 	query = fmt.Sprintf("%s %s WHERE order_id=$%d", query, strings.Join(set, ","), count)
 	params = append(params, orderId)
 
+	if req.CarId != "" && req.PickupDate != "" {
+		resCheckCars, err := s.checkCarsIsAlreadyOccupied(c, &models.RequestOrdersCheckOcupiedCars{
+			CarId:      req.CarId,
+			PickupDate: req.PickupDate,
+		})
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		if resCheckCars.Message == "car-already-occupied" {
+			return nil, errors.New(resCheckCars.Message)
+		}
+	}
+
 	_, err = s.db.Exec(c, query, params...)
 	if err != nil {
 		log.Println(err)
