@@ -203,16 +203,30 @@ func (s *Server) updateCarsController(c *gin.Context, req *models.CarsRequestUpd
 		params = append(params, req.Image)
 	}
 
-	if req.DayRate != 0 {
+	if req.DayRate != "" {
+		dayRateVal, err := strconv.ParseFloat(strings.TrimSpace(req.DayRate), 64)
+		if err != nil {
+			errorMsg = "failed-parsing-day-rate"
+			log.Println(err)
+			return nil, errors.New(errorMsg)
+		}
+
 		count++
 		set = append(set, fmt.Sprintf("day_rate=$%d", count))
-		params = append(params, req.DayRate)
+		params = append(params, dayRateVal)
 	}
 
-	if req.MonthRate != 0 {
+	if req.MonthRate != "" {
+		monthRateVal, err := strconv.ParseFloat(strings.TrimSpace(req.MonthRate), 64)
+		if err != nil {
+			errorMsg = "failed-parsing-month-rate"
+			log.Println(err)
+			return nil, errors.New(errorMsg)
+		}
+
 		count++
 		set = append(set, fmt.Sprintf("month_rate=$%d", count))
-		params = append(params, req.MonthRate)
+		params = append(params, monthRateVal)
 	}
 
 	count++

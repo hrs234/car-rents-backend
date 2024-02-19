@@ -26,11 +26,11 @@ type CarsRequestCreate struct {
 }
 
 type CarsRequestUpdate struct {
-	Id        string  `json:"id"`
-	CarName   string  `json:"car_name"`
-	DayRate   float64 `json:"day_rate"`
-	MonthRate float64 `json:"month_rate"`
-	Image     string  `json:"image"`
+	Id        string `json:"id"`
+	CarName   string `json:"car_name"`
+	DayRate   string `json:"day_rate"`
+	MonthRate string `json:"month_rate"`
+	Image     string `json:"image"`
 }
 
 type CarsRequestDelete struct {
